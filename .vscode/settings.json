@@ -1,3 +1,6 @@
 {
-  "cSpell.words": ["autoresize"]
+  "cSpell.words": ["autoresize"],
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnPaste": true,
+  "editor.formatOnSave": true
 }
