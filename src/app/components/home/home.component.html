@@ -1,7 +1,14 @@
-<ul>
-  <li *ngFor="let itm of item$ | async">
-    time: {{ itm.timestamp | date: "short" }} | temp:
-    {{ itm.bme.temperature }} | humidity:
-    {{ itm.bme.humidity }}
-  </li>
-</ul>
+<mat-card *ngFor="let module of modules$ | async">
+  <mat-card-header>
+    <mat-card-title>{{ module.name }}</mat-card-title>
+    <mat-card-subtitle>{{
+      module.lastReadout.timestamp | date: "short"
+    }}</mat-card-subtitle>
+  </mat-card-header>
+  <mat-card-content>
+    Last Reading:
+    <pre>
+      {{ module.lastReadout.bme | json }}
+    </pre>
+  </mat-card-content>
+</mat-card>

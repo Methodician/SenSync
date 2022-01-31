@@ -8,11 +8,12 @@ import { Observable } from 'rxjs';
   styleUrls: ['./home.component.scss'],
 })
 export class HomeComponent implements OnInit {
-  item$: Observable<any>;
+  modules$: Observable<any>;
 
   constructor(db: Database) {
-    const node = ref(db, 'readoutsByModuleId/FB1');
-    this.item$ = listVal(node);
+    const node = ref(db, 'modules');
+    this.modules$ = listVal(node, { keyField: 'id' });
+    this.modules$.subscribe(console.log);
   }
 
   ngOnInit(): void {}
