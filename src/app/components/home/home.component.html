@@ -1,0 +1,7 @@
+<ul>
+  <li *ngFor="let itm of item$ | async">
+    time: {{ itm.timestamp | date: "short" }} | temp:
+    {{ itm.bme.temperature }} | humidity:
+    {{ itm.bme.humidity }}
+  </li>
+</ul>
