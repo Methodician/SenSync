@@ -15,6 +15,7 @@ import { ModuleOverviewComponent } from './components/module-overview/module-ove
 // NGMaterial
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
+import { MatCardModule } from '@angular/material/card'
 
 @NgModule({
   declarations: [
@@ -32,6 +33,7 @@ import { MatListModule } from '@angular/material/list';
     BrowserAnimationsModule,
     MatSidenavModule,
     MatListModule,
+    MatCardModule
   ],
   providers: [],
   bootstrap: [AppComponent],
