@@ -13,7 +13,6 @@ export class HomeComponent implements OnInit {
   constructor(db: Database) {
     const node = ref(db, 'modules');
     this.modules$ = listVal(node, { keyField: 'id' });
-    this.modules$.subscribe(console.log);
   }
 
   ngOnInit(): void {}
