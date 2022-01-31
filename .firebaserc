@@ -1,0 +1,14 @@
+{
+  "targets": {
+    "senspout": {
+      "hosting": {
+        "SenSync": [
+          "sensync"
+        ]
+      }
+    }
+  },
+  "projects": {
+    "default": "senspout"
+  }
+}

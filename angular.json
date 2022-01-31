@@ -125,6 +125,16 @@
             ],
             "scripts": []
           }
+        },
+        "deploy": {
+          "builder": "@angular/fire:deploy",
+          "options": {
+            "prerender": false,
+            "ssr": false,
+            "browserTarget": "SenSync:build:production",
+            "firebaseProject": "senspout",
+            "firebaseHostingSite": "sensync"
+          }
         }
       }
     }
