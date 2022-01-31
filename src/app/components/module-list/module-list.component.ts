@@ -7,13 +7,11 @@ import { Observable } from 'rxjs';
   templateUrl: './module-list.component.html',
   styleUrls: ['./module-list.component.scss'],
 })
-export class ModuleListComponent implements OnInit {
+export class ModuleListComponent {
   modules$: Observable<any>;
 
   constructor(db: Database) {
     const node = ref(db, 'modules');
-    this.modules$ = listVal(node);
+    this.modules$ = listVal(node, { keyField: 'id' });
   }
-
-  ngOnInit(): void {}
 }
