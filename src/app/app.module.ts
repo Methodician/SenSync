@@ -15,7 +15,11 @@ import { ModuleOverviewComponent } from './components/module-overview/module-ove
 // NGMaterial
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
-import { MatCardModule } from '@angular/material/card'
+import { MatCardModule } from '@angular/material/card';
+
+// echarts
+import { NgxEchartsModule } from 'ngx-echarts';
+import { LineChartComponent } from './components/charts/line-chart/line-chart.component';
 
 @NgModule({
   declarations: [
@@ -23,6 +27,7 @@ import { MatCardModule } from '@angular/material/card'
     HomeComponent,
     ModuleListComponent,
     ModuleOverviewComponent,
+    LineChartComponent,
   ],
   imports: [
     BrowserModule,
@@ -33,7 +38,10 @@ import { MatCardModule } from '@angular/material/card'
     BrowserAnimationsModule,
     MatSidenavModule,
     MatListModule,
-    MatCardModule
+    MatCardModule,
+    NgxEchartsModule.forRoot({
+      echarts: () => import('echarts'),
+    }),
   ],
   providers: [],
   bootstrap: [AppComponent],

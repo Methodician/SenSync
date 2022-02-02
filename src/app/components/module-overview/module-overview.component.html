@@ -1,14 +1,14 @@
-
-<mat-card *ngIf="(module$ | async) as module">
-    <mat-card-header>
-        <mat-card-title> {{ module.name }}</mat-card-title>
-    </mat-card-header>
+<sen-line-chart [chartOption]="chartOption()"></sen-line-chart>
+<mat-card *ngIf="module$ | async as module">
+  <mat-card-header>
+    <mat-card-title> {{ module.name }}</mat-card-title>
+  </mat-card-header>
 </mat-card>
 <mat-card *ngFor="let readout of readouts$ | async">
-    <mat-card-header>
-        <mat-card-title>{{ readout.timestamp | date: 'short'}}</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-        <pre>{{ readout.bme | json }}</pre>
-    </mat-card-content>
+  <mat-card-header>
+    <mat-card-title>{{ readout.timestamp | date: "short" }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <pre>{{ readout.bme | json }}</pre>
+  </mat-card-content>
 </mat-card>
