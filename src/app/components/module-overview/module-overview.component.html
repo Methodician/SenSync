@@ -1,5 +1,8 @@
-<sen-line-chart [chartOption]="chartOption()"></sen-line-chart>
-<mat-card *ngIf="module$ | async as module">
+<sen-line-chart
+  *ngIf="chartOption$ | async as chartOption"
+  [chartOption]="chartOption"
+></sen-line-chart>
+<!-- <mat-card *ngIf="module$ | async as module">
   <mat-card-header>
     <mat-card-title> {{ module.name }}</mat-card-title>
   </mat-card-header>
@@ -11,4 +14,4 @@
   <mat-card-content>
     <pre>{{ readout.bme | json }}</pre>
   </mat-card-content>
-</mat-card>
+</mat-card> -->
