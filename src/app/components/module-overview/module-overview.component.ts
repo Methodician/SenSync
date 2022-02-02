@@ -16,8 +16,7 @@ import {
   YAXisComponentOption,
   SeriesOption,
 } from 'echarts';
-import { limitToLast } from 'firebase/database';
-import { combineLatest, map, Observable, pipe, switchMap } from 'rxjs';
+import { map, Observable, switchMap } from 'rxjs';
 
 export interface ReadoutI {
   bme: {
@@ -64,6 +63,9 @@ export class ModuleOverviewComponent {
         const humidity = readouts.map(readout => readout.bme.humidity);
         const temperature = readouts.map(readout => readout.bme.temperature);
 
+        const yAxis: YAXisComponentOption = {
+          type: 'value',
+        };
         const xAxis: XAXisComponentOption = {
           type: 'category',
           data: timestamps,
@@ -76,10 +78,11 @@ export class ModuleOverviewComponent {
           type: 'line',
           data: temperature,
         };
+        const series: SeriesOption[] = [humiditySeries, temperatureSeries];
         const chartOption: EChartsOption = {
+          yAxis,
           xAxis,
-          series: [humiditySeries, temperatureSeries],
-          yAxis: { type: 'value' },
+          series,
         };
 
         return chartOption;
