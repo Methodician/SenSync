@@ -27,6 +27,8 @@ export const onFirstReadout = functions.database
 export const onNewReadout = functions.database
   .ref('/readoutsByModuleId/{moduleId}/{readoutId}')
   .onCreate((snapshot, context) => {
+    // Thinking here I should also just maintain a list of all the readoutIds by module to avoid a querying step?
+    // To get really desomethingized I could maintain a full list of the readouts data under this structure too...
     const val = snapshot.val();
     const { moduleId } = context.params;
     const moduleUpdate = {
