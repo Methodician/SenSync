@@ -1,18 +1,21 @@
-<mat-card
-  *ngFor="let module of modules$ | async"
-  (click)="moduleClick(module.id!)"
->
-  <mat-card-header>
-    <mat-card-title>{{ module.name }}</mat-card-title>
-    <mat-card-subtitle
-      >updated
-      {{ module.lastReadout.timestamp | date: "short" }}</mat-card-subtitle
-    >
-  </mat-card-header>
-  <mat-card-content>
-    <p><b>Gas:</b> {{ module.lastReadout.bme.gas }}</p>
-    <p><b>Humidity:</b> {{ module.lastReadout.bme.humidity }}</p>
-    <p><b>Pressure:</b> {{ module.lastReadout.bme.pressure }}</p>
-    <p><b>Temperature:</b> {{ module.lastReadout.bme.temperature }}</p>
-  </mat-card-content>
-</mat-card>
+<!-- Overview Cards -->
+<section class="overview-cards">
+  <mat-card
+    *ngFor="let module of modules$ | async"
+    (click)="moduleClick(module.id!)"
+  >
+    <mat-card-header>
+      <mat-card-title>{{ module.name }}</mat-card-title>
+      <mat-card-subtitle
+        >updated
+        {{ module.lastReadout.timestamp | date: 'short' }}</mat-card-subtitle
+      >
+    </mat-card-header>
+    <mat-card-content>
+      <p><b>Gas:</b> {{ module.lastReadout.bme.gas }}</p>
+      <p><b>Humidity:</b> {{ module.lastReadout.bme.humidity }}</p>
+      <p><b>Pressure:</b> {{ module.lastReadout.bme.pressure }}</p>
+      <p><b>Temperature:</b> {{ module.lastReadout.bme.temperature }}</p>
+    </mat-card-content>
+  </mat-card>
+</section>
