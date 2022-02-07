@@ -1,42 +1,38 @@
 import * as functions from 'firebase-functions';
 
-// // Start writing Firebase Functions
-// // https://firebase.google.com/docs/functions/typescript
-//
-// export const helloWorld = functions.https.onRequest((request, response) => {
-//   functions.logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
 
-export const onFirstReadout = functions.database
-  .ref('/readoutsByModuleId/{moduleId}')
-  .onCreate((snapshot, context) => {
-    const val = snapshot.val();
-    const { moduleId } = context.params;
-    const seedModule = {
-      name: 'UNAMED MODULE',
-      lastReadout: val[Object.keys(val)[0]],
-    };
-    functions.logger.log('Initializing module');
-    return snapshot.ref.parent?.parent
-      ?.child('modules')
-      .child(moduleId)
-      .set(seedModule);
-  });
+export const onNewInit = functions.database
+  .ref('/initLog/{key}')
+  .onCreate((snap) => {
+    const val = snap.val();
+    const { moduleId, ip, timestamp, spoutVersion } = val as {moduleId: string, ip: string, timestamp: number, spoutVersion: string};
+    const moduleRef = snap.ref.parent?.parent?.child('modules').child(moduleId);
+    return moduleRef?.child('lastInit').set({ip, timestamp, spoutVersion})
+  })
 
 export const onNewReadout = functions.database
-  .ref('/readoutsByModuleId/{moduleId}/{readoutId}')
+  .ref('/readouts/{readoutId}')
   .onCreate((snapshot, context) => {
     // Thinking here I should also just maintain a list of all the readoutIds by module to avoid a querying step?
     // To get really desomethingized I could maintain a full list of the readouts data under this structure too...
     const val = snapshot.val();
-    const { moduleId } = context.params;
+    const { readoutId } = context.params;
+    const { moduleId } = val;
+    
+    const moduleRef = snapshot.ref.parent?.parent
+      ?.child('modules')
+      .child(moduleId);
+    
+    delete val.modlueId;
+    
     const moduleUpdate = {
       lastReadout: val,
     };
-    functions.logger.log('Updating module');
-    return snapshot.ref.parent?.parent?.parent
-      ?.child('modules')
-      .child(moduleId)
-      .update(moduleUpdate);
+    const idPush = moduleRef?.child('readoutIds').child(readoutId).set(true)
+    const readoutUpdate = moduleRef?.update(moduleUpdate);
+    const promises: Promise<any>[] = [];
+    if (idPush) promises.push(idPush);
+    if (readoutUpdate) promises.push(readoutUpdate);
+
+    return Promise.all(promises)
   });
