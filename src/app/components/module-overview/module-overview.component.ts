@@ -33,18 +33,6 @@ export class ModuleOverviewComponent {
     private activeRoute: ActivatedRoute,
     private db: AngularFireDatabase,
   ) {
-    this.activeRoute.params
-      .pipe(
-        map(params => params['id']),
-        filter(id => !!id),
-      )
-      .subscribe(id => {
-        const myQuery = this.db.list('readouts', ref =>
-          ref.orderByChild('moduleId').equalTo(id),
-        );
-        myQuery.valueChanges().subscribe(console.log);
-      });
-
     this.chartOption$ = this.activeRoute.params.pipe(
       map(params => params['id']),
       switchMap((id: string) =>
@@ -55,7 +43,6 @@ export class ModuleOverviewComponent {
           .valueChanges(),
       ),
       map(readouts => {
-        console.log(readouts);
         if (!readouts) {
           return {};
         }
