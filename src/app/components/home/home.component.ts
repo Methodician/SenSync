@@ -2,8 +2,13 @@ import { Component, OnInit } from '@angular/core';
 // import { Database, ref, listVal } from '@angular/fire/database';
 import { AngularFireDatabase } from '@angular/fire/compat/database';
 import { Router } from '@angular/router';
-import { EChartsOption } from 'echarts';
-import { map, Observable } from 'rxjs';
+import {
+  EChartsOption,
+  SeriesOption,
+  XAXisComponentOption,
+  YAXisComponentOption,
+} from 'echarts';
+import { combineLatest, map, Observable } from 'rxjs';
 import { ModuleI, ReadoutI } from 'src/app/models';
 
 @Component({
@@ -12,9 +17,8 @@ import { ModuleI, ReadoutI } from 'src/app/models';
   styleUrls: ['./home.component.scss'],
 })
 export class HomeComponent implements OnInit {
-  modules$: Observable<ModuleI[] | null>;
-  // chartOptions$: Observable<EChartsOption>;
-  readouts$: Observable<any>;
+  modules$: Observable<ModuleI[]>;
+  chartOption$: Observable<EChartsOption>;
 
   constructor(db: AngularFireDatabase, private router: Router) {
     const modulesNode = db.list<ModuleI>('modules');
@@ -34,36 +38,76 @@ export class HomeComponent implements OnInit {
     // this.modules$ = listVal<ModuleI>(modulesNode, { keyField: 'id' });
 
     const readoutsNode = db.list<ReadoutI>('readouts', ref =>
-      ref.orderByChild('timestamp').limitToLast(5),
+      ref.orderByChild('timestamp').limitToLast(50000),
     );
-    this.readouts$ = readoutsNode.snapshotChanges().pipe(
-      map(
-        changes =>
-          changes.map(change => {
-            const { key } = change.payload;
-            const readout = change.payload.val();
-            if (!key || !readout) {
-              console.log('It seems like we should never see this');
-              return null;
-            }
-            // Could replace temp with dynamic option
-            const {
-              bme: { temperature },
-              moduleId,
-              timestamp,
-            } = readout;
-            return {
-              key,
-              moduleId,
-              temperature,
-              timestamp,
-            };
-          }),
-        // map(temperatures => )
+    const readouts$ = readoutsNode.snapshotChanges().pipe(
+      map(changes =>
+        changes.map(change => {
+          const { key } = change.payload;
+          const readout = change.payload.val();
+          if (!key || !readout) {
+            throw new Error('It seems like we should never see this');
+          }
+          // Could replace temp with dynamic option
+          const {
+            bme: { temperature },
+            moduleId,
+            timestamp,
+          } = readout;
+          return {
+            key,
+            moduleId,
+            temperature,
+            timestamp,
+          };
+        }),
       ),
     );
 
-    this.readouts$.subscribe(console.log);
+    this.chartOption$ = combineLatest([this.modules$, readouts$]).pipe(
+      map(([modules, readouts]) => {
+        const yAxis: YAXisComponentOption = {
+          type: 'value',
+          name: 'Temperature',
+        };
+        const xAxis: XAXisComponentOption[] = modules.map(module => ({
+          type: 'category',
+          data: readouts
+            .filter(readout => readout.moduleId === module.id)
+            .map(readout => new Date(readout.timestamp).toLocaleTimeString()),
+          axisTick: {
+            alignWithLabel: false,
+          },
+        }));
+        const selectedSeries: SeriesOption[] = modules.map(module => {
+          const moduleReadouts = readouts.filter(
+            readout => readout.moduleId === module.id,
+          );
+          const temperature = moduleReadouts.map(
+            readout => readout.temperature,
+          );
+          const series: SeriesOption = {
+            type: 'line',
+            data: temperature,
+            name: module.name,
+          };
+          return series;
+        });
+
+        const chartOption: EChartsOption = {
+          tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+              type: 'cross',
+            },
+          },
+          yAxis,
+          xAxis,
+          series: selectedSeries,
+        };
+        return chartOption;
+      }),
+    );
   }
 
   ngOnInit(): void {}
