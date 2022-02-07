@@ -1,7 +1,0 @@
-<mat-list>
-  <mat-list-item *ngFor="let module of modules$ | async">
-    <a mat-line [routerLink]="['/modules', module.id]">
-      {{ module.name }}
-    </a>
-  </mat-list-item>
-</mat-list>

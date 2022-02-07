@@ -2,8 +2,15 @@
 <mat-drawer-container autoresize>
   <mat-drawer #drawer>
     <mat-nav-list>
-      <a mat-list-item routerLink="/">Home</a>
-      <a mat-list-item routerLink="/modules">All Modules</a>
+      <a (click)="drawer.close()" mat-list-item routerLink="/">Home</a>
+      <a
+        (click)="drawer.close()"
+        *ngFor="let module of modules$ | async"
+        mat-list-item
+        [routerLink]="['/modules', module.id]"
+      >
+        {{ module.name }} </a
+      >>
     </mat-nav-list>
   </mat-drawer>
   <mat-drawer-content>

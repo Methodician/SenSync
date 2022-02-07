@@ -9,7 +9,6 @@ import { provideAuth, getAuth } from '@angular/fire/auth';
 import { provideDatabase, getDatabase } from '@angular/fire/database';
 import { HomeComponent } from './components/home/home.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { ModuleListComponent } from './components/module-list/module-list.component';
 import { ModuleOverviewComponent } from './components/module-overview/module-overview.component';
 
 // NGMaterial
@@ -25,10 +24,10 @@ import { LineChartComponent } from './components/charts/line-chart/line-chart.co
   declarations: [
     AppComponent,
     HomeComponent,
-    ModuleListComponent,
     ModuleOverviewComponent,
     LineChartComponent,
   ],
+
   imports: [
     BrowserModule,
     AppRoutingModule,
