@@ -1,4 +1,7 @@
-<button (click)="drawer.toggle()">nav</button>
+<mat-toolbar>
+  <mat-icon (click)="drawer.toggle()">menu</mat-icon>
+  <span>Bright House SenSync</span>
+</mat-toolbar>
 <mat-drawer-container autoresize>
   <mat-drawer #drawer>
     <mat-nav-list>

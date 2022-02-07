@@ -21,6 +21,8 @@ import { AngularFireDatabaseModule } from '@angular/fire/compat/database';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatCardModule } from '@angular/material/card';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatIconModule } from '@angular/material/icon';
 
 // echarts
 import { NgxEchartsModule } from 'ngx-echarts';
@@ -48,6 +50,8 @@ import { LineChartComponent } from './components/charts/line-chart/line-chart.co
     MatSidenavModule,
     MatListModule,
     MatCardModule,
+    MatToolbarModule,
+    MatIconModule,
     NgxEchartsModule.forRoot({
       echarts: () => import('echarts'),
     }),
