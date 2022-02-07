@@ -3,13 +3,19 @@ import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
 import { environment } from '../environments/environment';
-import { provideAuth, getAuth } from '@angular/fire/auth';
-import { provideDatabase, getDatabase } from '@angular/fire/database';
+
 import { HomeComponent } from './components/home/home.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ModuleOverviewComponent } from './components/module-overview/module-overview.component';
+
+// NgFire
+import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
+import { AngularFireModule } from '@angular/fire/compat';
+// import { provideAuth, getAuth } from '@angular/fire/auth';
+import { AngularFireAuthModule } from '@angular/fire/compat/auth';
+import { provideDatabase, getDatabase } from '@angular/fire/database';
+import { AngularFireDatabaseModule } from '@angular/fire/compat/database';
 
 // NGMaterial
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -32,8 +38,12 @@ import { LineChartComponent } from './components/charts/line-chart/line-chart.co
     BrowserModule,
     AppRoutingModule,
     provideFirebaseApp(() => initializeApp(environment.firebase)),
-    provideAuth(() => getAuth()),
+    // Providing module style because ngFire kitchen sink does...
+    AngularFireModule.initializeApp(environment.firebase),
+    // provideAuth(() => getAuth()),
+    AngularFireAuthModule,
     provideDatabase(() => getDatabase()),
+    AngularFireDatabaseModule,
     BrowserAnimationsModule,
     MatSidenavModule,
     MatListModule,

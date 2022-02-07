@@ -20,6 +20,16 @@ export interface ModuleI {
   readoutIds: KeyMapI<boolean>;
 }
 
+export interface ReadoutI {
+  bme: {
+    gas: number;
+    humidity: number;
+    pressure: number;
+    temperature: number;
+  };
+  timestamp: number;
+}
+
 export interface KeyMapI<T> {
   [key: string]: T;
 }
