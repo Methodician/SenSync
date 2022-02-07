@@ -28,6 +28,7 @@ export interface ReadoutI {
     temperature: number;
   };
   timestamp: number;
+  moduleId: string;
 }
 
 export interface KeyMapI<T> {
