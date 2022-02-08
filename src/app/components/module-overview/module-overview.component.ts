@@ -49,12 +49,18 @@ export class ModuleOverviewComponent {
           return {};
         }
         // const timestamps = readouts.map(readout => new Date(readout.timestamp).getMinutes());
-        const timestamps = readouts.map(readout => {
-          const time = new Date(readout.timestamp);
-          return time.toLocaleTimeString();
-        });
-        const humidity = readouts.map(readout => readout.bme.humidity);
-        const temperature = readouts.map(readout => readout.bme.temperature);
+        // const timestamps = readouts.map(readout => {
+        //   const time = new Date(readout.timestamp);
+        //   return time.toLocaleTimeString();
+        // });
+        const humidity = readouts.map(readout => [
+          readout.timestamp,
+          readout.bme.humidity,
+        ]);
+        const temperature = readouts.map(readout => [
+          readout.timestamp,
+          readout.bme.temperature,
+        ]);
         const yAxisHumidity: YAXisComponentOption = {
           type: 'value',
           name: 'Humidity',
@@ -66,8 +72,9 @@ export class ModuleOverviewComponent {
         };
         const yAxis: YAXisComponentOption[] = [yAxisHumidity, yAxisTemperature];
         const xAxis: XAXisComponentOption = {
-          type: 'category',
-          data: timestamps,
+          type: 'time',
+          // data: timestamps,
+          alignTicks: true,
         };
         const humiditySeries: SeriesOption = {
           name: 'Humidity',
