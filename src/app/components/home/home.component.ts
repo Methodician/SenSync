@@ -66,29 +66,46 @@ export class HomeComponent implements OnInit {
 
     this.chartOption$ = combineLatest([this.modules$, readouts$]).pipe(
       map(([modules, readouts]) => {
+        // const xAxis: XAXisComponentOption[] = modules.map(module => ({
+        //   type: 'category',
+        //   data: readouts
+        //     .filter(readout => readout.moduleId === module.id)
+        //     .map(readout => new Date(readout.timestamp).toLocaleTimeString()),
+        //   axisTick: {
+        //     alignWithLabel: false,
+        //   },
+        // }));
+        const xAxis: XAXisComponentOption[] = modules.map(module => ({
+          type: 'time',
+          axisLabel: {
+            formatter: function (value: number) {
+              let date = new Date(value);
+              if (date.getHours() === 0) {
+                return date.toLocaleDateString();
+              }
+
+              return date.toLocaleTimeString();
+            },
+          },
+        }));
         const yAxis: YAXisComponentOption = {
           type: 'value',
           name: 'Temperature',
         };
-        const xAxis: XAXisComponentOption[] = modules.map(module => ({
-          type: 'category',
-          data: readouts
-            .filter(readout => readout.moduleId === module.id)
-            .map(readout => new Date(readout.timestamp).toLocaleTimeString()),
-          axisTick: {
-            alignWithLabel: false,
-          },
-        }));
         const selectedSeries: SeriesOption[] = modules.map(module => {
           const moduleReadouts = readouts.filter(
             readout => readout.moduleId === module.id,
           );
-          const temperature = moduleReadouts.map(
-            readout => readout.temperature,
-          );
+          // const tempAndTimestamp = moduleReadouts.map(
+          //   readout => readout.temperature,
+          // );
+          const tempAndTimestamp = moduleReadouts.map(readout => [
+            readout.timestamp,
+            readout.temperature,
+          ]);
           const series: SeriesOption = {
             type: 'line',
-            data: temperature,
+            data: tempAndTimestamp,
             name: module.name,
           };
           return series;
@@ -96,10 +113,12 @@ export class HomeComponent implements OnInit {
 
         const chartOption: EChartsOption = {
           tooltip: {
-            trigger: 'axis',
+            trigger: 'item',
             axisPointer: {
-              type: 'cross',
+              type: 'line',
+              axis: 'x',
             },
+            displayMode: 'single',
           },
           yAxis,
           xAxis,
