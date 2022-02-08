@@ -17,8 +17,8 @@ import {
   YAXisComponentOption,
   SeriesOption,
 } from 'echarts';
-import { filter, map, Observable, switchMap } from 'rxjs';
-import { ReadoutI } from 'src/app/models';
+import { combineLatest, map, Observable, switchMap } from 'rxjs';
+import { ModuleI, ReadoutI } from 'src/app/models';
 
 @Component({
   selector: 'sen-module-overview',
@@ -35,38 +35,63 @@ export class ModuleOverviewComponent {
   ) {
     this.chartOption$ = this.activeRoute.params.pipe(
       map(params => params['id']),
-      switchMap((id: string) =>
-        this.db
+      switchMap((id: string) => {
+        const module$ = this.db.object<ModuleI>(`modules/${id}`).valueChanges();
+        const readouts$ = this.db
           .list<ReadoutI>('readouts', ref =>
             ref.orderByChild('moduleId').equalTo(id),
           )
-          .valueChanges(),
-      ),
-      map(readouts => {
+          .valueChanges();
+        return combineLatest([module$, readouts$]);
+      }),
+      map(([module, readouts]) => {
         if (!readouts) {
           return {};
         }
         // const timestamps = readouts.map(readout => new Date(readout.timestamp).getMinutes());
-        const timestamps = readouts.map(readout => readout.timestamp);
+        const timestamps = readouts.map(readout => {
+          const time = new Date(readout.timestamp);
+          return time.toLocaleTimeString();
+        });
         const humidity = readouts.map(readout => readout.bme.humidity);
         const temperature = readouts.map(readout => readout.bme.temperature);
-        const yAxis: YAXisComponentOption = {
+        const yAxisHumidity: YAXisComponentOption = {
+          type: 'value',
+          name: 'Humidity',
+        };
+        const yAxisTemperature: YAXisComponentOption = {
+          name: 'Temperature',
+          alignTicks: true,
           type: 'value',
         };
+        const yAxis: YAXisComponentOption[] = [yAxisHumidity, yAxisTemperature];
         const xAxis: XAXisComponentOption = {
           type: 'category',
           data: timestamps,
         };
         const humiditySeries: SeriesOption = {
+          name: 'Humidity',
           type: 'line',
           data: humidity,
         };
         const temperatureSeries: SeriesOption = {
+          name: 'Temperature',
           type: 'line',
           data: temperature,
+          yAxisIndex: 1,
         };
         const series: SeriesOption[] = [humiditySeries, temperatureSeries];
         const chartOption: EChartsOption = {
+          title: {
+            text: `${module?.name} - Humidity vs Temperature`,
+            left: 'center',
+          },
+          tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+              type: 'cross',
+            },
+          },
           yAxis,
           xAxis,
           series,
