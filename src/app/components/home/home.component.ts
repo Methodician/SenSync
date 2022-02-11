@@ -12,7 +12,7 @@ import { combineLatest, map, Observable } from 'rxjs';
 import { ModuleI, ReadoutI } from 'src/app/models';
 
 const fakeDates = () => {
-  const dates = [];
+  const dates: any[] = [];
   for (let i = 0; i < 100; i++) {
     dates.push(new Date().setDate(new Date().getDate() + i));
   }
@@ -31,10 +31,11 @@ export class HomeComponent implements OnInit {
   dates = fakeDates();
 
   tooltipTestChartOption: EChartsOption;
+  chartOption: EChartsOption;
 
   constructor(db: AngularFireDatabase, private router: Router) {
     const modulesNode = db.list<ModuleI>('modules');
-    this.modules$ = modulesNode.snapshotChanges().pipe(
+    const modules$ = (this.modules$ = modulesNode.snapshotChanges().pipe(
       map(changes =>
         changes.map(
           change =>
@@ -44,7 +45,91 @@ export class HomeComponent implements OnInit {
             } as ModuleI),
         ),
       ),
-    );
+    ));
+    const readouts$ = db
+      .list<ReadoutI>('readouts', ref =>
+        ref.orderByChild('timestamp').limitToLast(50000),
+      )
+      .snapshotChanges()
+      .pipe(
+        map(changes =>
+          changes.map(change => {
+            const { key } = change.payload;
+            const readout = change.payload.val();
+            if (!key || !readout) {
+              throw new Error('It seems like we should never see this');
+            }
+            // Could replace temp with dynamic option
+            const {
+              bme: { temperature },
+              moduleId,
+              timestamp,
+            } = readout;
+            return {
+              key,
+              moduleId,
+              temperature,
+              timestamp,
+            };
+          }),
+        ),
+      );
+
+    interface KeyMapI<T> {
+      [key: string]: T;
+    }
+    // LEGIT
+    combineLatest([modules$, readouts$]).subscribe(([modules, readouts]) => {
+      const readoutsByModule: KeyMapI<ReadoutI[]> = readouts.reduce(
+        (acc, readout) => {
+          const { moduleId } = readout;
+          if (!acc[moduleId]) {
+            acc[moduleId] = [];
+          }
+          acc[moduleId].push(readout);
+          return acc;
+        },
+        {},
+      );
+      // console.log(readoutsByModule);
+
+      const modulesWithReadouts = modules.map(module => {
+        const { id } = module;
+        const readouts = readoutsByModule[id!];
+        return {
+          ...module,
+          readouts,
+        };
+      });
+      console.log(modulesWithReadouts[0]);
+      const moduleSeries = modulesWithReadouts.map(({ name, readouts }) => {
+        const series: SeriesOption = {
+          name,
+          type: 'line',
+          data: readouts.map((readout: any) => [
+            readout.timestamp,
+            readout.temperature,
+          ]),
+        };
+        return series;
+      });
+      this.chartOption = {
+        tooltip: {
+          trigger: 'axis',
+        },
+        xAxis: {
+          type: 'time',
+        },
+        yAxis: {
+          type: 'value',
+        },
+        series: moduleSeries,
+      };
+
+      console.log(this.chartOption);
+    });
+
+    // end legit
     // TESTING
     this.tooltipTestChartOption = {
       tooltip: {

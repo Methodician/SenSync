@@ -1,10 +1,9 @@
-<div echarts [options]="tooltipTestChartOption" class="demo-chart"></div>
-<!-- <div
+<div
+  *ngIf="chartOption"
   echarts
-  *ngIf="chartOption$ | async as chartOption"
   [options]="chartOption"
   class="demo-chart"
-></div> -->
+></div>
 <section class="overview-cards">
   <mat-card
     *ngFor="let module of modules$ | async"
