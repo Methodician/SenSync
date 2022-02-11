@@ -1,16 +1,11 @@
 <div
-  *ngIf="chartOption"
+  *ngIf="chartOption$ | async as chartOption"
   echarts
   [options]="chartOption"
   class="demo-chart"
 ></div>
-<div
-  *ngIf="tooltipTestChartOption"
-  echarts
-  [options]="tooltipTestChartOption"
-  class="demo-chart"
-></div>
-<!-- <section class="overview-cards">
+
+<section class="overview-cards">
   <mat-card
     *ngFor="let module of modules$ | async"
     (click)="moduleClick(module.id!)"
@@ -29,4 +24,4 @@
       <p><b>Temperature:</b> {{ module.lastReadout.bme.temperature }}</p>
     </mat-card-content>
   </mat-card>
-</section> -->
+</section>

@@ -21,6 +21,7 @@ export interface ModuleI {
 }
 
 export interface ReadoutI {
+  key?: string;
   bme: {
     gas: number;
     humidity: number;
