@@ -11,12 +11,23 @@ import {
 import { combineLatest, map, Observable } from 'rxjs';
 import { ModuleI, ReadoutI } from 'src/app/models';
 
-const fakeDates = () => {
-  const dates: any[] = [];
-  for (let i = 0; i < 100; i++) {
-    dates.push(new Date().setDate(new Date().getDate() + i));
+const fakeData = () => {
+  const data: any[] = [];
+  // const length = Math.random() * 100;
+  const length = 100;
+  const now = new Date();
+  let lastTimeIncrement = 0;
+  let lastDatapoint = 50;
+  for (let i = 0; i < length; i++) {
+    // THIS CAUSES TOOLTIP TO SHOW ONLY ONE AT A TIME
+    // lastTimeIncrement += Math.random() * 10;
+    lastTimeIncrement += 5;
+    lastDatapoint += Math.random() * 10 - 5;
+    const nextDate = new Date(now.getTime() + lastTimeIncrement * 1000);
+
+    data.push([nextDate, lastDatapoint]);
   }
-  return dates;
+  return data;
 };
 
 @Component({
@@ -28,10 +39,15 @@ export class HomeComponent implements OnInit {
   modules$: Observable<ModuleI[]>;
   chartOption$: Observable<EChartsOption>;
 
-  dates = fakeDates();
+  // dates = fakeDates();
 
   tooltipTestChartOption: EChartsOption;
   chartOption: EChartsOption;
+
+  // isOptionReady = () =>
+  //   !!this.chartOption &&
+  //   this.chartOption.series &&
+  //   (this.chartOption.series as SeriesOption[]).length === 5;
 
   constructor(db: AngularFireDatabase, private router: Router) {
     const modulesNode = db.list<ModuleI>('modules');
@@ -48,7 +64,7 @@ export class HomeComponent implements OnInit {
     ));
     const readouts$ = db
       .list<ReadoutI>('readouts', ref =>
-        ref.orderByChild('timestamp').limitToLast(50000),
+        ref.orderByChild('timestamp').limitToLast(1000),
       )
       .snapshotChanges()
       .pipe(
@@ -101,15 +117,20 @@ export class HomeComponent implements OnInit {
           readouts,
         };
       });
-      console.log(modulesWithReadouts[0]);
+
       const moduleSeries = modulesWithReadouts.map(({ name, readouts }) => {
         const series: SeriesOption = {
           name,
           type: 'line',
-          data: readouts.map((readout: any) => [
-            readout.timestamp,
-            readout.temperature,
-          ]),
+          data: readouts.map((readout: any) => {
+            // Rounding to the nearest 5 minutes syncs up the readouts
+            // This is a hacky way to get the tooltip to display all at once
+            const coeff = 1000 * 60 * 5; // 5 minutes
+            return [
+              new Date(Math.round(readout.timestamp / coeff) * coeff),
+              readout.temperature,
+            ];
+          }),
         };
         return series;
       });
@@ -131,6 +152,17 @@ export class HomeComponent implements OnInit {
 
     // end legit
     // TESTING
+
+    const series: SeriesOption[] = [];
+    for (let i = 0; i < 5; i++) {
+      const next: SeriesOption = {
+        name: `Series ${i}`,
+        type: 'line',
+        data: fakeData(),
+      };
+      series.push(next);
+    }
+
     this.tooltipTestChartOption = {
       tooltip: {
         trigger: 'axis',
@@ -142,22 +174,26 @@ export class HomeComponent implements OnInit {
         type: 'value',
         name: 'testing',
       },
-      series: [
-        {
-          type: 'line',
-          data: this.dates.map(date => [date, Math.random() * 100]),
-          name: 't1',
-        },
-        {
-          type: 'line',
-          data: this.dates.map(date => [date, Math.random() * 100]),
-          name: 't2',
-        },
-      ],
+      series,
+      // series: [
+      //   {
+      //     type: 'line',
+      //     data: this.dates.map(date => [date, Math.random() * 100]),
+      //     name: 't1',
+      //   },
+      //   {
+      //     type: 'line',
+      //     data: this.dates.map(date => [date, Math.random() * 100]),
+      //     name: 't2',
+      //   },
+      // ],
       // legend: {
       //   data: ['Readout'],
       // },
     };
+
+    console.log(this.tooltipTestChartOption);
+
     // end testing
     // modular
     // const modulesNode = ref(db, 'modules');
