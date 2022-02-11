@@ -1,8 +1,10 @@
-<sen-line-chart
+<div
   *ngIf="chartOption$ | async as chartOption"
-  [chartOption]="chartOption"
-></sen-line-chart>
-<!-- Overview Cards -->
+  echarts
+  [options]="chartOption"
+  class="demo-chart"
+></div>
+
 <section class="overview-cards">
   <mat-card
     *ngFor="let module of modules$ | async"
