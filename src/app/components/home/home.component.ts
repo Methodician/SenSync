@@ -105,6 +105,8 @@ export class HomeComponent implements OnInit {
         const yAxis: YAXisComponentOption = {
           type: 'value',
           name: selectedSensor,
+          // Should probably be indoor-only option because outside can freeze
+          min: 12,
         };
         const tooltip: TooltipComponentOption = {
           trigger: 'axis',
