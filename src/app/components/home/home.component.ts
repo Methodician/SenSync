@@ -110,9 +110,6 @@ export class HomeComponent implements OnInit {
           trigger: 'axis',
           axisPointer: {
             type: 'cross',
-            // label: {
-            //   backgroundColor: '#6a7985',
-            // },
           },
         };
         const legend: LegendComponentOption = {
@@ -148,6 +145,23 @@ export class HomeComponent implements OnInit {
           series,
           tooltip,
           legend,
+          toolbox: {
+            right: 20,
+            feature: {
+              dataZoom: {
+                yAxisIndex: 'none',
+              },
+              saveAsImage: {},
+              restore: {},
+              magicType: {},
+            },
+          },
+          dataZoom: [
+            {
+              startValue: new Date().setHours(0),
+            },
+            { type: 'inside' },
+          ],
         };
         return option;
       }),
