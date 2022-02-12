@@ -105,14 +105,13 @@ export class HomeComponent implements OnInit {
         const yAxis: YAXisComponentOption = {
           type: 'value',
           name: selectedSensor,
+          // Should probably be indoor-only option because outside can freeze
+          min: 12,
         };
         const tooltip: TooltipComponentOption = {
           trigger: 'axis',
           axisPointer: {
             type: 'cross',
-            // label: {
-            //   backgroundColor: '#6a7985',
-            // },
           },
         };
         const legend: LegendComponentOption = {
@@ -148,6 +147,23 @@ export class HomeComponent implements OnInit {
           series,
           tooltip,
           legend,
+          toolbox: {
+            right: 20,
+            feature: {
+              dataZoom: {
+                yAxisIndex: 'none',
+              },
+              saveAsImage: {},
+              restore: {},
+              magicType: {},
+            },
+          },
+          dataZoom: [
+            {
+              startValue: new Date().setHours(0),
+            },
+            { type: 'inside' },
+          ],
         };
         return option;
       }),
