@@ -28,6 +28,55 @@ import { ModuleI, ReadoutI } from 'src/app/models';
 //   subtasks?: Task[];
 // }
 
+const baseChatOption: EChartsOption = {
+  // title: {
+  //   text: 'Bright House Sensor Data',
+  // },
+  tooltip: {
+    trigger: 'axis',
+    axisPointer: {
+      type: 'cross',
+    },
+  },
+  legend: {},
+  xAxis: {
+    type: 'time',
+    axisLabel: {
+      formatter: function (value: number) {
+        let date = new Date(value);
+        if (date.getHours() === 0) {
+          return date.toLocaleDateString();
+        }
+
+        return date.toLocaleTimeString();
+      },
+    },
+  },
+  yAxis: {
+    type: 'value',
+    name: 'y axis',
+    min: 12,
+  },
+  series: [],
+  toolbox: {
+    right: 20,
+    feature: {
+      dataZoom: {
+        yAxisIndex: 'none',
+      },
+      saveAsImage: {},
+      restore: {},
+      magicType: {},
+    },
+  },
+  dataZoom: [
+    {
+      startValue: new Date().setHours(0),
+    },
+    { type: 'inside' },
+  ],
+};
+
 type QueryTimeDepthT = 'hour' | 'day' | 'week' | 'month' | 'year' | 'all';
 
 type SensorT = 'temperature' | 'humidity' | 'pressure' | 'gas';
@@ -53,67 +102,6 @@ export interface KeyMapI<T> {
 })
 export class HomeComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new Subject();
-  modules$: Observable<ModuleI[]>;
-  readings$ = new BehaviorSubject<ReadoutI[]>([]);
-  // chartOption$$ = new BehaviorSubject<EChartsOption>();
-  chartOption$: Observable<EChartsOption>;
-  chartOption: EChartsOption = {
-    // title: {
-    //   text: 'Bright House Sensor Data',
-    // },
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'cross',
-      },
-    },
-    legend: {},
-    xAxis: {
-      type: 'time',
-      axisLabel: {
-        formatter: function (value: number) {
-          let date = new Date(value);
-          if (date.getHours() === 0) {
-            return date.toLocaleDateString();
-          }
-
-          return date.toLocaleTimeString();
-        },
-      },
-    },
-    yAxis: {
-      type: 'value',
-      name: 'y axis',
-      min: 12,
-    },
-    series: [],
-  };
-  updateOption: EChartsOption;
-
-  shouldSync = true; // Could be dynamic
-
-  // sensor options
-  sensorOptions: SensorOptions[] = [
-    {
-      name: 'Temperature',
-      sensor: 'temperature',
-    },
-    {
-      name: 'Humidity',
-      sensor: 'humidity',
-    },
-    {
-      name: 'Pressure',
-      sensor: 'pressure',
-    },
-    {
-      name: 'Gas',
-      sensor: 'gas',
-    },
-  ];
-
-  selectedSensor: SensorT = 'humidity';
-
   // query depth options
   queryDepthOptions: QueryDepthOptions[] = [
     {
@@ -141,8 +129,40 @@ export class HomeComponent implements OnInit, OnDestroy {
       depth: 'all',
     },
   ];
-
+  // sensor options
+  sensorOptions: SensorOptions[] = [
+    {
+      name: 'Temperature',
+      sensor: 'temperature',
+    },
+    {
+      name: 'Humidity',
+      sensor: 'humidity',
+    },
+    {
+      name: 'Pressure',
+      sensor: 'pressure',
+    },
+    {
+      name: 'Gas',
+      sensor: 'gas',
+    },
+  ];
+  // Duplicationg these for ngModel is probably superfluous
+  // Comes from incremental evolution of the code
+  selectedSensor: SensorT = 'humidity';
+  selectedSensor$ = new BehaviorSubject<SensorT>(this.selectedSensor);
   selectedQueryDepth: QueryTimeDepthT = 'week';
+  selectedQueryDepth$ = new BehaviorSubject<QueryTimeDepthT>(
+    this.selectedQueryDepth,
+  );
+  modules$: Observable<ModuleI[]>;
+  readings$ = new Subject<ReadoutI[]>();
+  chartOption$: Observable<EChartsOption>;
+  chartOption: EChartsOption = baseChatOption;
+  updateOption: EChartsOption;
+
+  shouldSync = true; // Could be dynamic
 
   constructor(private db: AngularFireDatabase, private router: Router) {
     this.modules$ = db
@@ -159,17 +179,7 @@ export class HomeComponent implements OnInit, OnDestroy {
           ),
         ),
       );
-    this.updateSensorQuery();
-    this.updateSensorSelection();
-
-    this.chartOption$
-      .pipe(takeUntil(this.unsubscribe$))
-      .subscribe(chartOption => {
-        if (!this.chartOption) {
-          this.chartOption = chartOption;
-        }
-        this.updateOption = chartOption;
-      });
+    this.initializeChart();
   }
 
   ngOnInit(): void {}
@@ -215,7 +225,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   readingsSubscription: Subscription;
   updateSensorQuery = () => {
-    console.log(this.selectedQueryDepth);
+    this.readingsSubscription?.unsubscribe();
     this.readingsSubscription = this.db
       .list<ReadoutI>('readouts', ref =>
         ref
@@ -224,6 +234,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       )
       .snapshotChanges()
       .pipe(
+        takeUntil(this.unsubscribe$),
         map(changes =>
           changes.map(change => {
             const { key } = change.payload;
@@ -241,11 +252,31 @@ export class HomeComponent implements OnInit, OnDestroy {
       .subscribe(readouts => this.readings$.next(readouts));
   };
 
-  // rename
-  updateSensorSelection = () => {
-    const chartOption$ = combineLatest([this.modules$, this.readings$]).pipe(
-      map(([modules, readings]) => {
-        const readoutsByModule: KeyMapI<ReadoutI[]> = readings.reduce(
+  onSensorChange = () => {
+    this.selectedSensor$.next(this.selectedSensor);
+  };
+
+  onQueryDepthChange = () => {
+    this.selectedQueryDepth$.next(this.selectedQueryDepth);
+  };
+
+  lastQueryDepth = '';
+  initializeChart = () => {
+    this.updateSensorQuery();
+    combineLatest([
+      this.modules$,
+      this.readings$,
+      this.selectedSensor$,
+      this.selectedQueryDepth$,
+    ])
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe(([modules, readings, selectedSensor, selectedQueryDepth]) => {
+        if (this.lastQueryDepth !== selectedQueryDepth) {
+          this.updateSensorQuery();
+          this.lastQueryDepth = selectedQueryDepth;
+        }
+
+        const readoutsByModule: Record<string, ReadoutI[]> = readings.reduce(
           (acc, readout) => {
             const { moduleId } = readout;
             if (!acc[moduleId]) {
@@ -270,29 +301,29 @@ export class HomeComponent implements OnInit, OnDestroy {
             },
           },
         };
+
         const yAxis: YAXisComponentOption = {
           type: 'value',
-          name: this.selectedSensor,
+          name: selectedSensor,
           // Should probably be indoor-only option because outside can freeze
           min: 12,
         };
-        const tooltip: TooltipComponentOption = {
-          trigger: 'axis',
-          axisPointer: {
-            type: 'cross',
-          },
-        };
+
         const legend: LegendComponentOption = {
           data: modules.map(({ name }) => name),
         };
+
         const series: SeriesOption[] = modules.map(module => {
           const { name, id } = module;
+
           if (!id) {
             throw new Error(
               'No module id. It seems like we should never see this',
             );
           }
+
           const readouts = readoutsByModule[id];
+
           const nextSeries: SeriesOption = {
             name,
             type: 'line',
@@ -300,46 +331,26 @@ export class HomeComponent implements OnInit, OnDestroy {
               // Rounding to the nearest 5 minutes syncs up the readouts
               // This is a hacky way to get the tooltip to display all at once
               const coeff = 1000 * 60 * 5; // 5 minutes
-              const reading = this.getReadingByType(
-                this.selectedSensor,
-                readout,
-              );
+              const reading = this.getReadingByType(selectedSensor, readout);
               const date = this.shouldSync
                 ? new Date(Math.round(readout.timestamp / coeff) * coeff)
                 : new Date(readout.timestamp);
               return [date, reading];
             }),
           };
+
           return nextSeries;
         });
+
         const option: EChartsOption = {
           xAxis,
           yAxis,
-          series,
-          tooltip,
           legend,
-          toolbox: {
-            right: 20,
-            feature: {
-              dataZoom: {
-                yAxisIndex: 'none',
-              },
-              saveAsImage: {},
-              restore: {},
-              magicType: {},
-            },
-          },
-          dataZoom: [
-            {
-              startValue: new Date().setHours(0),
-            },
-            { type: 'inside' },
-          ],
+          series,
         };
-        return option;
-      }),
-    );
-    this.chartOption$ = chartOption$;
+
+        this.updateOption = option;
+      });
   };
 
   moduleClick = (moduleId: string) =>

@@ -13,7 +13,7 @@
       aria-labelledby="sensor-radio-group-label"
       class="radio-group"
       [(ngModel)]="selectedSensor"
-      (ngModelChange)="updateSensorSelection()"
+      (ngModelChange)="onSensorChange()"
     >
       <mat-radio-button
         class="radio-button"
@@ -32,7 +32,7 @@
       aria-labelledby="query-depth-radio-group-label"
       class="radio-group"
       [(ngModel)]="selectedQueryDepth"
-      (ngModelChange)="updateSensorQuery()"
+      (ngModelChange)="onQueryDepthChange()"
     >
       <mat-radio-button
         class="radio-button"
