@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { AngularFireDatabase } from '@angular/fire/compat/database';
 import { Router } from '@angular/router';
 import {
@@ -14,7 +14,9 @@ import {
   combineLatest,
   map,
   Observable,
+  Subject,
   Subscription,
+  takeUntil,
 } from 'rxjs';
 import { ModuleI, ReadoutI } from 'src/app/models';
 
@@ -49,10 +51,44 @@ export interface KeyMapI<T> {
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
+  private unsubscribe$ = new Subject();
   modules$: Observable<ModuleI[]>;
   readings$ = new BehaviorSubject<ReadoutI[]>([]);
+  // chartOption$$ = new BehaviorSubject<EChartsOption>();
   chartOption$: Observable<EChartsOption>;
+  chartOption: EChartsOption = {
+    // title: {
+    //   text: 'Bright House Sensor Data',
+    // },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'cross',
+      },
+    },
+    legend: {},
+    xAxis: {
+      type: 'time',
+      axisLabel: {
+        formatter: function (value: number) {
+          let date = new Date(value);
+          if (date.getHours() === 0) {
+            return date.toLocaleDateString();
+          }
+
+          return date.toLocaleTimeString();
+        },
+      },
+    },
+    yAxis: {
+      type: 'value',
+      name: 'y axis',
+      min: 12,
+    },
+    series: [],
+  };
+  updateOption: EChartsOption;
 
   shouldSync = true; // Could be dynamic
 
@@ -125,8 +161,23 @@ export class HomeComponent implements OnInit {
       );
     this.updateSensorQuery();
     this.updateSensorSelection();
+
+    this.chartOption$
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe(chartOption => {
+        if (!this.chartOption) {
+          this.chartOption = chartOption;
+        }
+        this.updateOption = chartOption;
+      });
   }
 
+  ngOnInit(): void {}
+
+  ngOnDestroy(): void {
+    this.unsubscribe$.next(null);
+    this.unsubscribe$.complete();
+  }
   getQueryDate = (timeDepth: QueryTimeDepthT) => {
     const date = new Date();
     switch (timeDepth) {
@@ -290,8 +341,6 @@ export class HomeComponent implements OnInit {
     );
     this.chartOption$ = chartOption$;
   };
-
-  ngOnInit(): void {}
 
   moduleClick = (moduleId: string) =>
     this.router.navigate(['modules', moduleId]);
