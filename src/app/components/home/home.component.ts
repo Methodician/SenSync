@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AngularFireDatabase } from '@angular/fire/compat/database';
+import { FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
   EChartsOption,
@@ -41,10 +42,28 @@ export class HomeComponent implements OnInit {
         ),
       ));
 
+    //! this all seems wrong and I am stoned
+    // minutes per day
+    const minutesPerDay = 24 * 60;
+    // intervals per day
+    const intervalsPerDay = minutesPerDay / 5;
+    // number of 5-minute intervals in a day
+    // Github Gopilot can provide suggestions like this if you give it a leading comment
+    const dayIntervals = (24 * 60) / 5; // 24 hours / 5 minutes
+    // Github Copilot can explain its suggestions if you add // after a line it suggested
+    // number of 5-minute intervals in a week
+    const weekIntervals = dayIntervals * 7; // 7 days
+    // Github Copilot can explain its suggestions if you add
+    // after a line it suggested and it totally did that automatically after writing
+    // the above comment, perhaps coincidence? I don't know. I'm not sure. I'm not sure. I'm not sure.
+    const monthIntervals = dayIntervals * 30; // 30 days
+    const yearIntervals = dayIntervals * 365; // 365 days
+
     const readouts$ = db
-      .list<ReadoutI>('readouts', ref =>
-        // ref.orderByChild('timestamp').limitToLast(1000),
-        ref.orderByChild('timestamp'),
+      .list<ReadoutI>(
+        'readouts',
+        ref => ref.orderByChild('timestamp').limitToLast(weekIntervals),
+        // ref => ref.orderByChild('timestamp'),
       )
       .snapshotChanges()
       .pipe(
@@ -63,8 +82,8 @@ export class HomeComponent implements OnInit {
         ),
       );
 
-    type reading = 'temperature' | 'humidity' | 'pressure' | 'gas';
-    const getReadingByType = (type: reading, readout: ReadoutI) => {
+    type Reading = 'temperature' | 'humidity' | 'pressure' | 'gas';
+    const getReadingByType = (type: Reading, readout: ReadoutI) => {
       const { bme } = readout;
       if (!bme) {
         throw new Error('It seems like we should never see this');
@@ -72,7 +91,7 @@ export class HomeComponent implements OnInit {
       return bme[type];
     };
 
-    const selectedSensor = 'temperature'; // Could be dynamic
+    const selectedSensor: Reading = 'humidity'; // Could be dynamic
     const shouldSync = true; // Could be dynamic
     const chartOption$ = combineLatest([modules$, readouts$]).pipe(
       map(([modules, readouts]) => {
