@@ -13,7 +13,8 @@
         [(ngModel)]="sensor.selected"
         [color]="sensor.color"
         (ngModelChange)="updateSensorSelection()"
-      ></mat-checkbox>
+        >{{ sensor.name }}</mat-checkbox
+      >
     </li>
   </ul>
 </span>
