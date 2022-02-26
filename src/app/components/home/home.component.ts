@@ -9,27 +9,35 @@ import {
   TooltipComponentOption,
   LegendComponentOption,
 } from 'echarts';
-import { combineLatest, map, Observable } from 'rxjs';
+import {
+  BehaviorSubject,
+  combineLatest,
+  map,
+  Observable,
+  Subscription,
+} from 'rxjs';
 import { ModuleI, ReadoutI } from 'src/app/models';
 
-// from AngularMaterial checkbox example
-import { ThemePalette } from '@angular/material/core';
+// // example of recursive type can apply to differ
+// export interface Task {
+//   name: string;
+//   completed: boolean;
+//   color: ThemePalette;
+//   subtasks?: Task[];
+// }
 
-// example of recursive type can apply to differ
-export interface Task {
-  name: string;
-  completed: boolean;
-  color: ThemePalette;
-  subtasks?: Task[];
-}
+type QueryTimeDepthT = 'hour' | 'day' | 'week' | 'month' | 'year' | 'all';
 
 type SensorT = 'temperature' | 'humidity' | 'pressure' | 'gas';
 // sensor options interface
 export interface SensorOptions {
   name: string;
   sensor: SensorT;
-  color: ThemePalette;
-  selected: boolean;
+}
+
+export interface QueryDepthOptions {
+  name: string;
+  depth: QueryTimeDepthT;
 }
 
 export interface KeyMapI<T> {
@@ -43,43 +51,65 @@ export interface KeyMapI<T> {
 })
 export class HomeComponent implements OnInit {
   modules$: Observable<ModuleI[]>;
-  readouts$: Observable<ReadoutI[]>;
+  readings$ = new BehaviorSubject<ReadoutI[]>([]);
   chartOption$: Observable<EChartsOption>;
 
   shouldSync = true; // Could be dynamic
 
   // sensor options
-  sensors: SensorOptions[] = [
+  sensorOptions: SensorOptions[] = [
     {
       name: 'Temperature',
       sensor: 'temperature',
-      color: 'primary',
-      selected: true,
     },
     {
       name: 'Humidity',
       sensor: 'humidity',
-      color: 'accent',
-      selected: true,
     },
     {
       name: 'Pressure',
       sensor: 'pressure',
-      color: 'warn',
-      selected: true,
     },
     {
       name: 'Gas',
       sensor: 'gas',
-      color: 'primary',
-      selected: true,
     },
   ];
 
   selectedSensor: SensorT = 'humidity';
 
-  constructor(db: AngularFireDatabase, private router: Router) {
-    const modules$ = (this.modules$ = db
+  // query depth options
+  queryDepthOptions: QueryDepthOptions[] = [
+    {
+      name: 'Hour',
+      depth: 'hour',
+    },
+    {
+      name: 'Day',
+      depth: 'day',
+    },
+    {
+      name: 'Week',
+      depth: 'week',
+    },
+    {
+      name: 'Month',
+      depth: 'month',
+    },
+    {
+      name: 'Year',
+      depth: 'year',
+    },
+    {
+      name: 'All',
+      depth: 'all',
+    },
+  ];
+
+  selectedQueryDepth: QueryTimeDepthT = 'week';
+
+  constructor(private db: AngularFireDatabase, private router: Router) {
+    this.modules$ = db
       .list<ModuleI>('modules')
       .snapshotChanges()
       .pipe(
@@ -92,27 +122,54 @@ export class HomeComponent implements OnInit {
               } as ModuleI),
           ),
         ),
-      ));
+      );
+    this.updateSensorQuery();
+    this.updateSensorSelection();
+  }
 
-    //date of yesterday
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    // date of 1 week ago
-    const weekAgo = new Date();
-    weekAgo.setDate(weekAgo.getDate() - 7);
+  getQueryDate = (timeDepth: QueryTimeDepthT) => {
+    const date = new Date();
+    switch (timeDepth) {
+      case 'hour':
+        date.setHours(date.getHours() - 1);
+        break;
+      case 'day':
+        date.setDate(date.getDate() - 1);
+        break;
+      case 'week':
+        date.setDate(date.getDate() - 7);
+        break;
+      case 'month':
+        date.setMonth(date.getMonth() - 1);
+        break;
+      case 'year':
+        date.setFullYear(date.getFullYear() - 1);
+        break;
+      case 'all':
+        date.setFullYear(date.getFullYear() - 100);
+        break;
+      default:
+        date.setFullYear(date.getFullYear() - 1);
+    }
+    return date;
+  };
 
-    // date of 1 month ago
-    const monthAgo = new Date();
-    monthAgo.setMonth(monthAgo.getMonth() - 1);
+  getReadingByType = (type: SensorT, readout: ReadoutI) => {
+    const { bme } = readout;
+    if (!bme) {
+      throw new Error('It seems like we should never see this');
+    }
+    return bme[type];
+  };
 
-    const yearAgo = new Date();
-    yearAgo.setFullYear(yearAgo.getFullYear() - 1);
-
-    const beginningOfTime = new Date(0);
-
-    const readouts$ = (this.readouts$ = db
+  readingsSubscription: Subscription;
+  updateSensorQuery = () => {
+    console.log(this.selectedQueryDepth);
+    this.readingsSubscription = this.db
       .list<ReadoutI>('readouts', ref =>
-        ref.orderByChild('timestamp').startAt(weekAgo.getTime()),
+        ref
+          .orderByChild('timestamp')
+          .startAt(this.getQueryDate(this.selectedQueryDepth).getTime()),
       )
       .snapshotChanges()
       .pipe(
@@ -129,129 +186,15 @@ export class HomeComponent implements OnInit {
             };
           }),
         ),
-      ));
-
-    const getReadingByType = (type: SensorT, readout: ReadoutI) => {
-      const { bme } = readout;
-      if (!bme) {
-        throw new Error('It seems like we should never see this');
-      }
-      return bme[type];
-    };
-
-    const shouldSync = true; // Could be dynamic
-    const chartOption$ = combineLatest([modules$, readouts$]).pipe(
-      map(([modules, readouts]) => {
-        const readoutsByModule: KeyMapI<ReadoutI[]> = readouts.reduce(
-          (acc, readout) => {
-            const { moduleId } = readout;
-            if (!acc[moduleId]) {
-              acc[moduleId] = [];
-            }
-            acc[moduleId].push(readout);
-            return acc;
-          },
-          {},
-        );
-        // const xAxis: XAXisComponentOption[] = [];
-        // const yAxis: YAXisComponentOption[] = [];
-        const xAxis: XAXisComponentOption = {
-          type: 'time',
-          axisLabel: {
-            formatter: function (value: number) {
-              let date = new Date(value);
-              if (date.getHours() === 0) {
-                return date.toLocaleDateString();
-              }
-
-              return date.toLocaleTimeString();
-            },
-          },
-        };
-        const yAxis: YAXisComponentOption = {
-          type: 'value',
-          name: this.selectedSensor,
-          // Should probably be indoor-only option because outside can freeze
-          min: 12,
-        };
-        const tooltip: TooltipComponentOption = {
-          trigger: 'axis',
-          axisPointer: {
-            type: 'cross',
-          },
-        };
-        const legend: LegendComponentOption = {
-          data: modules.map(({ name }) => name),
-        };
-        const series: SeriesOption[] = modules.map(module => {
-          const { name, id } = module;
-          if (!id) {
-            throw new Error(
-              'No module id. It seems like we should never see this',
-            );
-          }
-          const readouts = readoutsByModule[id];
-          const series: SeriesOption = {
-            name,
-            type: 'line',
-            data: readouts.map(readout => {
-              // Rounding to the nearest 5 minutes syncs up the readouts
-              // This is a hacky way to get the tooltip to display all at once
-              const coeff = 1000 * 60 * 5; // 5 minutes
-              const reading = getReadingByType(this.selectedSensor, readout);
-              const date = shouldSync
-                ? new Date(Math.round(readout.timestamp / coeff) * coeff)
-                : new Date(readout.timestamp);
-              return [date, reading];
-            }),
-          };
-          return series;
-        });
-        const option: EChartsOption = {
-          xAxis,
-          yAxis,
-          series,
-          tooltip,
-          legend,
-          toolbox: {
-            right: 20,
-            feature: {
-              dataZoom: {
-                yAxisIndex: 'none',
-              },
-              saveAsImage: {},
-              restore: {},
-              magicType: {},
-            },
-          },
-          dataZoom: [
-            {
-              startValue: new Date().setHours(0),
-            },
-            { type: 'inside' },
-          ],
-        };
-        return option;
-      }),
-    );
-    this.chartOption$ = chartOption$;
-  }
-
-  getReadingByType = (type: SensorT, readout: ReadoutI) => {
-    const { bme } = readout;
-    if (!bme) {
-      throw new Error('It seems like we should never see this');
-    }
-    return bme[type];
+      )
+      .subscribe(readouts => this.readings$.next(readouts));
   };
 
   // rename
   updateSensorSelection = () => {
-    console.log('updateSensorSelection');
-    console.log(this.sensors);
-    const chartOption$ = combineLatest([this.modules$, this.readouts$]).pipe(
-      map(([modules, readouts]) => {
-        const readoutsByModule: KeyMapI<ReadoutI[]> = readouts.reduce(
+    const chartOption$ = combineLatest([this.modules$, this.readings$]).pipe(
+      map(([modules, readings]) => {
+        const readoutsByModule: KeyMapI<ReadoutI[]> = readings.reduce(
           (acc, readout) => {
             const { moduleId } = readout;
             if (!acc[moduleId]) {
@@ -262,8 +205,7 @@ export class HomeComponent implements OnInit {
           },
           {},
         );
-        // const xAxis: XAXisComponentOption[] = [];
-        // const yAxis: YAXisComponentOption[] = [];
+
         const xAxis: XAXisComponentOption = {
           type: 'time',
           axisLabel: {
@@ -300,10 +242,10 @@ export class HomeComponent implements OnInit {
             );
           }
           const readouts = readoutsByModule[id];
-          const series: SeriesOption = {
+          const nextSeries: SeriesOption = {
             name,
             type: 'line',
-            data: readouts.map(readout => {
+            data: readouts?.map(readout => {
               // Rounding to the nearest 5 minutes syncs up the readouts
               // This is a hacky way to get the tooltip to display all at once
               const coeff = 1000 * 60 * 5; // 5 minutes
@@ -317,7 +259,7 @@ export class HomeComponent implements OnInit {
               return [date, reading];
             }),
           };
-          return series;
+          return nextSeries;
         });
         const option: EChartsOption = {
           xAxis,
