@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { AngularFireDatabase } from '@angular/fire/compat/database';
-import { FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
   EChartsOption,
@@ -77,45 +76,7 @@ export class HomeComponent implements OnInit {
     },
   ];
 
-  selectedSensors = () =>
-    this.sensors.filter(s => s.selected).map(s => s.sensor);
-
-  // from AngularMaterial example
-  task: Task = {
-    name: 'Indeterminate',
-    completed: false,
-    color: 'primary',
-    subtasks: [
-      { name: 'Primary', completed: false, color: 'primary' },
-      { name: 'Accent', completed: false, color: 'accent' },
-      { name: 'Warn', completed: false, color: 'warn' },
-    ],
-  };
-
-  allComplete: boolean = false;
-
-  updateAllComplete() {
-    this.allComplete =
-      this.task.subtasks != null && this.task.subtasks.every(t => t.completed);
-  }
-
-  someComplete(): boolean {
-    if (this.task.subtasks == null) {
-      return false;
-    }
-    return (
-      this.task.subtasks.filter(t => t.completed).length > 0 &&
-      !this.allComplete
-    );
-  }
-
-  setAll(completed: boolean) {
-    this.allComplete = completed;
-    if (this.task.subtasks == null) {
-      return;
-    }
-    this.task.subtasks.forEach(t => (t.completed = completed));
-  }
+  selectedSensor: SensorT = 'humidity';
 
   constructor(db: AngularFireDatabase, private router: Router) {
     const modules$ = (this.modules$ = db
@@ -133,28 +94,25 @@ export class HomeComponent implements OnInit {
         ),
       ));
 
-    //! this all seems wrong and I am stoned
-    // minutes per day
-    const minutesPerDay = 24 * 60;
-    // intervals per day
-    const intervalsPerDay = minutesPerDay / 5;
-    // number of 5-minute intervals in a day
-    // Github Gopilot can provide suggestions like this if you give it a leading comment
-    const dayIntervals = (24 * 60) / 5; // 24 hours / 5 minutes
-    // Github Copilot can explain its suggestions if you add // after a line it suggested
-    // number of 5-minute intervals in a week
-    const weekIntervals = dayIntervals * 7; // 7 days
-    // Github Copilot can explain its suggestions if you add
-    // after a line it suggested and it totally did that automatically after writing
-    // the above comment, perhaps coincidence? I don't know. I'm not sure. I'm not sure. I'm not sure.
-    const monthIntervals = dayIntervals * 30; // 30 days
-    const yearIntervals = dayIntervals * 365; // 365 days
+    //date of yesterday
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    // date of 1 week ago
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+
+    // date of 1 month ago
+    const monthAgo = new Date();
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+
+    const yearAgo = new Date();
+    yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+
+    const beginningOfTime = new Date(0);
 
     const readouts$ = (this.readouts$ = db
-      .list<ReadoutI>(
-        'readouts',
-        ref => ref.orderByChild('timestamp').limitToLast(weekIntervals),
-        // ref => ref.orderByChild('timestamp'),
+      .list<ReadoutI>('readouts', ref =>
+        ref.orderByChild('timestamp').startAt(weekAgo.getTime()),
       )
       .snapshotChanges()
       .pipe(
@@ -181,7 +139,6 @@ export class HomeComponent implements OnInit {
       return bme[type];
     };
 
-    const selectedSensor: SensorT = 'humidity'; // Could be dynamic
     const shouldSync = true; // Could be dynamic
     const chartOption$ = combineLatest([modules$, readouts$]).pipe(
       map(([modules, readouts]) => {
@@ -213,7 +170,7 @@ export class HomeComponent implements OnInit {
         };
         const yAxis: YAXisComponentOption = {
           type: 'value',
-          name: selectedSensor,
+          name: this.selectedSensor,
           // Should probably be indoor-only option because outside can freeze
           min: 12,
         };
@@ -241,10 +198,7 @@ export class HomeComponent implements OnInit {
               // Rounding to the nearest 5 minutes syncs up the readouts
               // This is a hacky way to get the tooltip to display all at once
               const coeff = 1000 * 60 * 5; // 5 minutes
-              const reading = getReadingByType(
-                this.selectedSensors()[0],
-                readout,
-              );
+              const reading = getReadingByType(this.selectedSensor, readout);
               const date = shouldSync
                 ? new Date(Math.round(readout.timestamp / coeff) * coeff)
                 : new Date(readout.timestamp);
@@ -325,7 +279,7 @@ export class HomeComponent implements OnInit {
         };
         const yAxis: YAXisComponentOption = {
           type: 'value',
-          name: this.selectedSensors()[0],
+          name: this.selectedSensor,
           // Should probably be indoor-only option because outside can freeze
           min: 12,
         };
@@ -354,7 +308,7 @@ export class HomeComponent implements OnInit {
               // This is a hacky way to get the tooltip to display all at once
               const coeff = 1000 * 60 * 5; // 5 minutes
               const reading = this.getReadingByType(
-                this.selectedSensors()[0],
+                this.selectedSensor,
                 readout,
               );
               const date = this.shouldSync

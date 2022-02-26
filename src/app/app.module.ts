@@ -24,7 +24,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatCardModule } from '@angular/material/card';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
-import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatRadioModule } from '@angular/material/radio';
 
 // echarts
 import { NgxEchartsModule } from 'ngx-echarts';
@@ -55,7 +55,7 @@ import { LineChartComponent } from './components/charts/line-chart/line-chart.co
     MatCardModule,
     MatToolbarModule,
     MatIconModule,
-    MatCheckboxModule,
+    MatRadioModule,
     NgxEchartsModule.forRoot({
       echarts: () => import('echarts'),
     }),
