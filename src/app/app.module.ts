@@ -8,6 +8,7 @@ import { environment } from '../environments/environment';
 import { HomeComponent } from './components/home/home.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ModuleOverviewComponent } from './components/module-overview/module-overview.component';
+import { FormsModule } from '@angular/forms';
 
 // NgFire
 import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
@@ -23,6 +24,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatCardModule } from '@angular/material/card';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 // echarts
 import { NgxEchartsModule } from 'ngx-echarts';
@@ -38,6 +40,7 @@ import { LineChartComponent } from './components/charts/line-chart/line-chart.co
 
   imports: [
     BrowserModule,
+    FormsModule,
     AppRoutingModule,
     provideFirebaseApp(() => initializeApp(environment.firebase)),
     // Providing module style because ngFire kitchen sink does...
@@ -52,6 +55,7 @@ import { LineChartComponent } from './components/charts/line-chart/line-chart.co
     MatCardModule,
     MatToolbarModule,
     MatIconModule,
+    MatCheckboxModule,
     NgxEchartsModule.forRoot({
       echarts: () => import('echarts'),
     }),
