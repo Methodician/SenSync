@@ -5,6 +5,19 @@
   class="demo-chart"
 ></div>
 
+<span class="sensor-options">
+  <ul>
+    <!-- ngfor through each sensor and popuolate a checkbox -->
+    <li *ngFor="let sensor of sensors">
+      <mat-checkbox
+        [(ngModel)]="sensor.selected"
+        [color]="sensor.color"
+        (ngModelChange)="updateSensorSelection()"
+      ></mat-checkbox>
+    </li>
+  </ul>
+</span>
+
 <!-- From AngularMaterial example -->
 <section class="example-section">
   <mat-checkbox class="example-margin">Check me!</mat-checkbox>
