@@ -28,15 +28,9 @@ import { MatRadioModule } from '@angular/material/radio';
 
 // echarts
 import { NgxEchartsModule } from 'ngx-echarts';
-import { LineChartComponent } from './components/charts/line-chart/line-chart.component';
 
 @NgModule({
-  declarations: [
-    AppComponent,
-    HomeComponent,
-    ModuleOverviewComponent,
-    LineChartComponent,
-  ],
+  declarations: [AppComponent, HomeComponent, ModuleOverviewComponent],
 
   imports: [
     BrowserModule,

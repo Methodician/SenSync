@@ -1,7 +1,9 @@
-<sen-line-chart
+<div
   *ngIf="chartOption$ | async as chartOption"
-  [chartOption]="chartOption"
-></sen-line-chart>
+  echarts
+  [options]="chartOption"
+  class="demo-chart"
+></div>
 <!-- <mat-card *ngIf="module$ | async as module">
   <mat-card-header>
     <mat-card-title> {{ module.name }}</mat-card-title>
