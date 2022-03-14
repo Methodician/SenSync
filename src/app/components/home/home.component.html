@@ -1,9 +1,49 @@
 <div
-  *ngIf="chartOption$ | async as chartOption"
   echarts
   [options]="chartOption"
+  [merge]="updateOption"
   class="demo-chart"
 ></div>
+
+<section class="selectors">
+  <div class="selector-wrapper">
+    <!-- Radios to select a sensor -->
+    <label id="sensor-radio-group-label">Pick a sensor</label>
+    <mat-radio-group
+      aria-labelledby="sensor-radio-group-label"
+      class="radio-group"
+      [(ngModel)]="selectedSensor"
+      (ngModelChange)="onSensorChange()"
+    >
+      <mat-radio-button
+        class="radio-button"
+        *ngFor="let sensor of sensorOptions"
+        [value]="sensor.sensor"
+      >
+        {{ sensor.name }}
+      </mat-radio-button>
+    </mat-radio-group>
+  </div>
+
+  <div class="selector-wrapper">
+    <!-- Radios to select query depth -->
+    <label id="query-depth-radio-group-label">Pick a query depth</label>
+    <mat-radio-group
+      aria-labelledby="query-depth-radio-group-label"
+      class="radio-group"
+      [(ngModel)]="selectedQueryDepth"
+      (ngModelChange)="onQueryDepthChange()"
+    >
+      <mat-radio-button
+        class="radio-button"
+        *ngFor="let option of queryDepthOptions"
+        [value]="option.depth"
+      >
+        {{ option.name }}
+      </mat-radio-button>
+    </mat-radio-group>
+  </div>
+</section>
 
 <section class="overview-cards">
   <mat-card
