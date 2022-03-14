@@ -1,6 +1,6 @@
 <div
-  *ngIf="chartOption$ | async as chartOption"
   echarts
   [options]="chartOption"
+  [merge]="updateOption"
   class="demo-chart"
 ></div>
