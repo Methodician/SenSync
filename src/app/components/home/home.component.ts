@@ -6,7 +6,6 @@ import {
   SeriesOption,
   XAXisComponentOption,
   YAXisComponentOption,
-  TooltipComponentOption,
   LegendComponentOption,
 } from 'echarts';
 import {
@@ -20,7 +19,7 @@ import {
 } from 'rxjs';
 import { ModuleI, ReadoutI } from 'src/app/models';
 
-// // example of recursive type can apply to differ
+// example of recursive type can apply to differ
 // export interface Task {
 //   name: string;
 //   completed: boolean;
@@ -29,9 +28,21 @@ import { ModuleI, ReadoutI } from 'src/app/models';
 // }
 
 const baseChatOption: EChartsOption = {
+  // this is not mobile friendly in combo with toolbox etc
   // title: {
   //   text: 'Bright House Sensor Data',
   // },
+  toolbox: {
+    right: 20,
+    feature: {
+      dataZoom: {
+        yAxisIndex: 'none',
+      },
+      saveAsImage: {},
+      restore: {},
+      magicType: {},
+    },
+  },
   tooltip: {
     trigger: 'axis',
     axisPointer: {
@@ -58,17 +69,6 @@ const baseChatOption: EChartsOption = {
     min: 12,
   },
   series: [],
-  toolbox: {
-    right: 20,
-    feature: {
-      dataZoom: {
-        yAxisIndex: 'none',
-      },
-      saveAsImage: {},
-      restore: {},
-      magicType: {},
-    },
-  },
   dataZoom: [
     {
       startValue: new Date().setHours(0),
@@ -158,7 +158,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   );
   modules$: Observable<ModuleI[]>;
   readings$ = new Subject<ReadoutI[]>();
-  chartOption$: Observable<EChartsOption>;
   chartOption: EChartsOption = baseChatOption;
   updateOption: EChartsOption;
 
